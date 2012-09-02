@@ -1,0 +1,5 @@
+{
+    "CONNECTION_STRING" : "connection string",
+    "COOKIE_SECRET" : "your cookie secret string",
+    "SALT" : "a salt for encryption"
+}
