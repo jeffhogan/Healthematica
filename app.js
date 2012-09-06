@@ -52,6 +52,51 @@ app.configure('development', function(){
   app.use(express.errorHandler());
 });
 
+
+/* Database ***********************/
+cradle.setup({
+    host: 'localhost',
+    cache: true, 
+    raw: false
+});
+
+var connect = new(cradle.Connection)('127.0.0.1:5984');
+var authDB = connect.database('users');
+
+authDB.view('user/byUsername', function (err, res) {
+  res.forEach(function (row) {
+      console.log(row.name, row.email, row.password);
+  });
+});
+var getHash = function(password, cb) {
+  crypto.pbkdf2(password, nconf.get("SALT"), 2048, 40, cb);
+};
+
+//authDB.view('user/byUsername', { email: 'admin@test.com' }, function (err, doc) {
+//    console.dir(doc);
+//});
+
+var saveUser = function(name, password, email, cb) {
+    async.parallel({
+        hash: function(cb) {
+           getHash(password, cb);
+        }
+    }, function(err, results) {
+        db.save({
+            'email': email,
+            'name': name,
+            'password': results.hash
+        }, function (err, res) {
+            console.log("res is " + res);
+        });
+    });
+};
+
+saveUser("jeff", "test", "j@j.com", function(err, test){
+    console.log("password hash is " + test);
+});
+
+
 /* Authentication ***********************/
 // Here's a helper method to hash a given password with PBKDF2
 // It's not bcrypt, but it'll do.
@@ -65,8 +110,12 @@ var users = [];
 // Now, we use async to hash two passwords and use them
 // to create our default users (bob and joe!).
 async.parallel({
-  secret: function(cb) { getHash("secret", cb); },
-  birthday: function(cb) { getHash("birthday", cb) }
+    secret: function(cb) { 
+        getHash("secret", cb); 
+    },
+    birthday: function(cb) { 
+        getHash("birthday", cb) 
+    }
 }, function(err, hashes) {
   users.push({ id: 1, username: 'bob', password: hashes.secret, email: 'bob@example.com' })
   users.push({ id: 2, username: 'joe', password: hashes.birthday, email: 'joe@example.com' })

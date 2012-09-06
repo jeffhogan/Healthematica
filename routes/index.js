@@ -2,7 +2,7 @@
 
 /* Main app routes */
 
-exports.index = function(req, res){
+module.exports.index = function(req, res){
     res.render('index', { 
         title: 'Express',
         user: req.user 
@@ -11,7 +11,7 @@ exports.index = function(req, res){
 
 
 /* Authentication Routes */
-exports.login = function(req, res) {
+module.exports.login = function(req, res) {
     res.render('login', { 
         title: 'Express',
         user: req.user, 
