@@ -63,26 +63,32 @@ cradle.setup({
 var connect = new(cradle.Connection)('127.0.0.1:5984');
 var authDB = connect.database('users');
 
-authDB.view('user/byUsername', function (err, res) {
-  res.forEach(function (row) {
-      console.log(row.name, row.email, row.password);
-  });
-});
+//authDB.view('user/byUsername', function (err, res) {
+//  res.forEach(function (row) {
+//      console.log(row.name, row.email, row.password);
+//  });
+//});
+
+//encrypt password
 var getHash = function(password, cb) {
   crypto.pbkdf2(password, nconf.get("SALT"), 2048, 40, cb);
 };
 
-//authDB.view('user/byUsername', { email: 'admin@test.com' }, function (err, doc) {
-//    console.dir(doc);
-//});
-
+/*
+ * Save a new user into the database
+ * name {string}
+ * password {string}
+ * email {string}
+ * cb {function}
+ */
 var saveUser = function(name, password, email, cb) {
     async.parallel({
         hash: function(cb) {
-           getHash(password, cb);
+            //validation here?
+            getHash(password, cb);
         }
     }, function(err, results) {
-        db.save({
+        authDB.save({
             'email': email,
             'name': name,
             'password': results.hash
@@ -92,17 +98,32 @@ var saveUser = function(name, password, email, cb) {
     });
 };
 
-saveUser("jeff", "test", "j@j.com", function(err, test){
-    console.log("password hash is " + test);
+/*
+ * Retrieve a document by username
+ * username {string}
+ * cb {function}
+ */
+var findUserByName = function(username, cb) {
+    authDB.view('user/byUsername', { key: username }, function (err, doc) {
+        if(doc.length != 0) { return cb(null, doc); }
+        return cb("There is no user by that name", null);
+    });
+};
+
+//saveUser("jeff", "test", "j@j.com", function(err, test){
+//    console.log("password hash is " + test);
+//});
+
+findUserByName("jeff", function(err, results){
+    if(err) { 
+        console.log(err) 
+    } else {
+        console.log("Found: " + results); 
+    }
 });
 
 
 /* Authentication ***********************/
-// Here's a helper method to hash a given password with PBKDF2
-// It's not bcrypt, but it'll do.
-var getHash = function(password, cb) {
-  crypto.pbkdf2(password, nconf.get("SALT"), 2048, 40, cb);
-};
 
 // We setup our global `users` array to use in place of a proper database
 var users = [];
