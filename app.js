@@ -9,6 +9,7 @@
 /* Dependencies ****************************/
 var express = require('express')
   , routes = require('./routes')
+  , db = require('./lib/hm_db.js')
   , http = require('http')
   , path = require('path')
   , fs = require('fs')
@@ -17,7 +18,6 @@ var express = require('express')
   , flash = require('connect-flash')
   , crypto = require('crypto')
   , async = require('async')
-  , cradle = require('cradle')
   , LocalStrategy = require('passport-local').Strategy;
 
 /* nconf setup ****************************/
@@ -27,8 +27,6 @@ nconf.argv()
 
 /* Configuration **************************/
 var app = express();
-var conn = new(cradle.Connection)();
-var db = conn.database('users');
 
 app.configure(function(){
   app.set('port', process.env.PORT || 3000);
@@ -52,71 +50,15 @@ app.configure('development', function(){
   app.use(express.errorHandler());
 });
 
-
-/* Database ***********************/
-cradle.setup({
-    host: 'localhost',
-    cache: true, 
-    raw: false
-});
-
-var connect = new(cradle.Connection)('127.0.0.1:5984');
-var authDB = connect.database('users');
-
-//authDB.view('user/byUsername', function (err, res) {
-//  res.forEach(function (row) {
-//      console.log(row.name, row.email, row.password);
-//  });
-//});
-
-//encrypt password
-var getHash = function(password, cb) {
-  crypto.pbkdf2(password, nconf.get("SALT"), 2048, 40, cb);
-};
-
-/*
- * Save a new user into the database
- * name {string}
- * password {string}
- * email {string}
- * cb {function}
- */
-var saveUser = function(name, password, email, cb) {
-    async.parallel({
-        hash: function(cb) {
-            //validation here?
-            getHash(password, cb);
-        }
-    }, function(err, results) {
-        authDB.save({
-            'email': email,
-            'name': name,
-            'password': results.hash
-        }, function (err, res) {
-            console.log("res is " + res);
-        });
-    });
-};
-
-/*
- * Retrieve a document by username
- * username {string}
- * cb {function}
- */
-var findUserByName = function(username, cb) {
-    authDB.view('user/byUsername', { key: username }, function (err, doc) {
-        if(doc.length != 0) { return cb(null, doc); }
-        return cb("There is no user by that name", null);
-    });
-};
-
+//TEST: create user
 //saveUser("jeff", "test", "j@j.com", function(err, test){
 //    console.log("password hash is " + test);
 //});
 
-findUserByName("jeff", function(err, results){
+//TEST: find a user
+db.findUserByName("jeff", function(err, results){
     if(err) { 
-        console.log(err) 
+        console.log(err); 
     } else {
         console.log("Found: " + results); 
     }
@@ -125,33 +67,6 @@ findUserByName("jeff", function(err, results){
 
 /* Authentication ***********************/
 
-// We setup our global `users` array to use in place of a proper database
-var users = [];
-
-// Now, we use async to hash two passwords and use them
-// to create our default users (bob and joe!).
-async.parallel({
-    secret: function(cb) { 
-        getHash("secret", cb); 
-    },
-    birthday: function(cb) { 
-        getHash("birthday", cb) 
-    }
-}, function(err, hashes) {
-  users.push({ id: 1, username: 'bob', password: hashes.secret, email: 'bob@example.com' })
-  users.push({ id: 2, username: 'joe', password: hashes.birthday, email: 'joe@example.com' })
-});
-
-// When a user logs in with their username, we need to be able to find the user object. So, here ya go.
-function findByUsername(username, fn) {
-  for (var i = 0, len = users.length; i < len; i++) {
-    var user = users[i];
-    if (user.username === username) {
-      return fn(null, user);
-    }
-  }
-  return fn(null, null);
-}
 
 // This is middleware we'll use to make sure an unauthenticated user can get to `/account`.
 function ensureAuthenticated(req, res, next) {
@@ -177,23 +92,18 @@ passport.deserializeUser(function(username, done) {
 // Here we're actually configuring Passport. Since we're doing local username/password
 // (as opposed to Twitter OAuth or something else), we use the LocalStrategy.
 passport.use(new LocalStrategy(
-  // This is the function that runs when a user attempts to authenticate.
-  function(username, password, done) {
-    // We first check to see if a username exists
-    findByUsername(username, function(err, user) {
-      if (err) { return done(err); }
-      if (!user) { return done(null, false, { message: 'Unknown user ' + username }); }
 
-      // Then we check if the password the user provided matches the one we have stored.
-      // We use `getHash()` again because we need to hash the provided password to compare
-      // it to the stored password. Note that we never decrypt the password hash. Hashes
-      // are one-way operations, you can't decrypt them.
-      getHash(password, function(err, key) {
-        if(err || key !== user.password) return done(null, false, {message: 'Invalid password'});
-        return done(null, user);
-      });
-    })
-  }
+    function(username, password, done) {
+        findUserByName(username, function(err, user) {
+            if (err) { return done(err); }
+            if (!user) { return done(null, false, { message: 'Unknown user ' + username }); }
+
+        getHash(password, function(err, hash) {
+            if(err || key !== user.password) return done(null, false, {message: 'Invalid password'});
+            return done(null, user);
+        });
+        })
+    }
 ));
 
 
@@ -255,6 +165,7 @@ app.post('/register', function(req, res) {
     // Create user in database
     } else {
       delete data.confirm_password;
+      require('db').save();
         db.save(data.username, data,
             function(db_err, db_res) {
               res.render('index', { message: req.flash('User created')});
