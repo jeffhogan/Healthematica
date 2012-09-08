@@ -10,13 +10,14 @@
 var express = require('express')
   , routes = require('./routes')
   , db = require('./lib/hm_db.js')
+  , auth = require('./lib/hm_auth.js')
+  , util = require('./lib/hm_util.js')
   , http = require('http')
   , path = require('path')
   , fs = require('fs')
   , nconf = require('nconf')
   , passport = require('passport')
   , flash = require('connect-flash')
-  , crypto = require('crypto')
   , async = require('async')
   , LocalStrategy = require('passport-local').Strategy;
 
@@ -51,71 +52,70 @@ app.configure('development', function(){
 });
 
 //TEST: create user
-//saveUser("jeff", "test", "j@j.com", function(err, test){
+//db.saveUser("peter", "freedom", "e@e.org", function(err, test){
 //    console.log("password hash is " + test);
 //});
 
 //TEST: find a user
-db.findUserByName("jeff", function(err, results){
-    if(err) { 
-        console.log(err); 
-    } else {
-        console.log("Found: " + results); 
-    }
-});
+//db.findUserByName("jeff", function(err, results){
+//    if(err) { 
+//        console.log(err); 
+//    } else {
+//        console.log("Found: " + results); 
+//    }
+//});
 
-
-/* Authentication ***********************/
-
-
-// This is middleware we'll use to make sure an unauthenticated user can get to `/account`.
-function ensureAuthenticated(req, res, next) {
-  // Note how Passport gives us an `isAuthenticated()` function on the request object.
-  if (req.isAuthenticated()) { return next(); }
-  res.redirect('/login')
-};
-
-// To use Passport's built-in session support, we need to be able to serialize a user
-// Here, we just store the `username`, which we'll use deserialize...
-passport.serializeUser(function(user, done) {
-  done(null, user.username);
-});
-
-// ... right here! So, we take the `username` we stored in the session and use our `findByUsername()`
-// to get the user object back.
-passport.deserializeUser(function(username, done) {
-  findByUsername(username, function (err, user) {
-    done(err, user);
-  });
-});
-
-// Here we're actually configuring Passport. Since we're doing local username/password
-// (as opposed to Twitter OAuth or something else), we use the LocalStrategy.
+/* Passport setup *******************************/
 passport.use(new LocalStrategy(
 
     function(username, password, done) {
-        findUserByName(username, function(err, user) {
+        db.findUserByName(username, function(err, user) {
             if (err) { return done(err); }
             if (!user) { return done(null, false, { message: 'Unknown user ' + username }); }
 
-        getHash(password, function(err, hash) {
-            if(err || key !== user.password) return done(null, false, {message: 'Invalid password'});
-            return done(null, user);
-        });
+            util.getHash(password, function(err, hash) {
+                if(err || hash !== user[0].value.password) return done(null, false, {message: 'Invalid password'});
+                return done(null, user[0].value);
+            });
         })
     }
 ));
 
+passport.serializeUser(function(user, done) {
+        done(null, user.name);
+});
+
+passport.deserializeUser(function(username, done) {
+    db.findUserByName(username, function (err, user) {
+        done(err, user[0].value);
+    });
+});
+
 
 /* Routes *******************************/
-app.get('/', routes.index);
-app.get('/login', routes.login);
+app.get('/', function(req, res){
+    res.render('index', { 
+        title: 'Express',
+        user: req.user 
+    });
+});
 
-// Here's the Passport magic. When the user posts the login form, we use the
-// passport.authenticate middleware. This function calls the LocalStrategy function we
-// defined above and handles redirecting if the user didn't give us correct
-// user credentials. If they did provide valid credentials, we just redirect them
-// back to the home page.
+app.get('/login', function(req, res) {
+    res.render('login', { 
+        title: 'Express',
+        user: req.user, 
+        message: req.flash('error') 
+    });
+});
+
+//app.get('/account', function(req, res) {
+//    res.render('account', { 
+//        title: 'Express',
+//        user: req.user,
+//        message: req.flash('error') 
+//    });
+//});
+
 app.post('/login',
   passport.authenticate('local', {failureRedirect: '/login', failureFlash: true}),
   function(req, res) {
@@ -123,12 +123,12 @@ app.post('/login',
   }
 );
 
-// Once the user is logged in, they can get to the `/account` page. To make sure
-// unauthenticated users can't see the account page, we use the ensureAuthenticated
-// middleware we defined above. This checks if the user is authenticated before allowing
-// the request to go on.
-app.get('/account', ensureAuthenticated, function(req, res){
-  res.render('account', { user: req.user });
+app.get('/account', auth.ensureAuthenticated, function(req, res){
+    res.render('account', { 
+        user: req.user,
+        title: 'Express',
+        message: req.flash('error')
+    });
 });
 
 // The `req.logout()` method is provided by Passport and provides an easy way to end
