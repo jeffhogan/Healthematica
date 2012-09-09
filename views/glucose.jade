@@ -2,6 +2,8 @@ extends layout
 
 block content
     h3 Glucose
+    if message
+        p.text-success= message
     table.table.table-hover 
       if glucoses.length 
         thead
