@@ -1,4 +1,3 @@
-
 /**
  * Healthematica - real time health information sharing
  * Created by Jeffrey Hogan for WDIM493j - Node.js 
@@ -118,7 +117,10 @@ app.get('/login', function(req, res) {
 app.post('/login',
   passport.authenticate('local', {failureRedirect: '/login', failureFlash: true}),
   function(req, res) {
-    message: req.flash("test"), 
+    // When using connect-flash, you set the key with the first parameter and value with the second.
+    // req.flash('error') is a getter.
+    // req.flash('error', 'value') is a setter.
+    req.flash("error", "test"), 
     res.redirect('/')
   }
 );
