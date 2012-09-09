@@ -3,7 +3,21 @@ div.span1#sidebar
         li 
             a(href="/") Home
         li 
-            a(href="/login") Login
-        li 
             a(href="#") About
+        - if (typeof(user) != 'undefined')
+            li.dropdown
+                a.dropdown-toggle(href="/account", data-toggle="dropdown") Account 
+                    b.caret
+                ul.dropdown-menu
+                    li
+                        a(href="/account") Dashboard
+                    li
+                        a(href="/account/glucose") Glucose
+                    li
+                        a(href="/account/exercise") Exercise
+            li 
+                a(href="/logout") Logout
+        - else
+            li
+                a(href="/login") Login
 

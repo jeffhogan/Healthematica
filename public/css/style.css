@@ -43,3 +43,16 @@ header {
 }
 
 /* Tables ****/
+
+
+/* Footer ****/
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background-color: #e6e6e6;
+}    
+    footer div {
+        position: relative;
+        text-align: center;
+    }

@@ -121,7 +121,7 @@ app.post('/login',
     // req.flash('error') is a getter.
     // req.flash('error', 'value') is a setter.
     req.flash("error", "test"), 
-    res.redirect('/')
+    res.redirect('/account')
   }
 );
 
@@ -167,7 +167,8 @@ app.post('/register', function(req, res) {
      // res.render('register', { message: req.flash('Password does not match')});
 
     } else if(data.username == "" || data.password == "" || data.email == "") {
-        res.render('register', { message: req.flash("Please fill out all fields")});
+        req.flash('error', "Please make sure to fill out all fields");
+        res.render('register', { message: req.flash('error')});
 
     // Create user in database
     } else {

@@ -3,7 +3,7 @@ extends layout
 block content
   h3 Login
   if message
-    p= message
+    p.text-error= message
   form(method='post', action='')
     label(for='username') Username
     input(id='username', name='username')
