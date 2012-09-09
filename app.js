@@ -133,8 +133,11 @@ app.get('/account', auth.ensureAuthenticated, function(req, res){
 });
 
     app.get('/account/glucose', auth.ensureAuthenticated, function(req, res) {
-        res.render('glucose', {
-            user: req.user
+        db.readMultiple("glucose", req.user.name, function(err, doc) {
+            res.render('glucose', {
+                user: req.user,
+                glucoses: doc 
+            });
         });
     });
 

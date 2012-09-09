@@ -2,14 +2,15 @@ extends layout
 
 block content
     h3 Glucose
-    table 
+    table.table.table-hover 
       if glucoses.length 
-        tr 
-          th ID 
-          th Blood Sugar 
-          th Date
-          th
-          th
-        each glucose in glucoses 
-          include glucose.row.jade
+        thead
+            tr 
+              th ID 
+              th Blood Sugar 
+              th Date
+              th
+              th
+            each glucose in glucoses 
+              include glucose.row.jade
         

@@ -1,9 +1,9 @@
-tr 
-    td #{glucose.id} 
-    td $#{glucose.bs}
-    td #{glucose.date} 
-    td 
-        a(href='/glucose/#{glucose.id}/edit') Edit 
-    td 
-        a(href='/widgets/#{glucose.id}') Delete
-
+tbody
+    tr 
+        td #{glucose.id} 
+        td #{glucose.value.bs}
+        td #{glucose.value.date} 
+        td 
+            a(href='/glucose/#{glucose.id}/edit') Edit 
+        td 
+            a(href='/widgets/#{glucose.id}') Delete

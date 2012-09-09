@@ -33,7 +33,13 @@ header {
     margin-top: 5px;
 }
 
+.container-fluid {
+    margin-left: 21px;
+}
+
 /* Sidebar ****/
 #sidebar {
     margin-top: 20px;
 }
+
+/* Tables ****/
