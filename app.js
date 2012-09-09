@@ -70,6 +70,7 @@ app.locals.title = 'Express';
 //    }
 //});
 
+
 /* Passport setup *******************************/
 passport.use(new LocalStrategy(
 
@@ -100,6 +101,11 @@ passport.deserializeUser(function(username, done) {
 /* Routes *******************************/
     /* Base Routes ****/
 app.get('/', function(req, res){
+
+    db.readMultiple("glucose", "jeff", function(err, doc) {
+        console.log(doc);    
+    });
+
     res.render('index', { 
         user: req.user 
     });
