@@ -30,3 +30,12 @@ module.exports.account = function(req, res) {
         message: req.flash('error') 
     });
 };
+
+
+    module.exports.glucose = function(req, res) {
+        res.render('login', { 
+            title: 'Express',
+            user: req.user, 
+            message: req.flash('error') 
+        });
+    };

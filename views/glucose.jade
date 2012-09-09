@@ -1,0 +1,15 @@
+extends layout
+
+block content
+    h3 Glucose
+    table 
+      if glucoses.length 
+        tr 
+          th ID 
+          th Blood Sugar 
+          th Date
+          th
+          th
+        each glucose in glucoses 
+          include glucose.row.jade
+        

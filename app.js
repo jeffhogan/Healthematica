@@ -119,7 +119,7 @@ app.post('/login',
   passport.authenticate('local', {failureRedirect: '/login', failureFlash: true}),
   function(req, res) {
     message: req.flash("test"), 
-    res.redirect('/')
+    res.redirect('/account')
   }
 );
 
@@ -129,6 +129,12 @@ app.get('/account', auth.ensureAuthenticated, function(req, res){
         message: req.flash('error')
     });
 });
+
+    app.get('/account/glucose', auth.ensureAuthenticated, function(req, res) {
+        res.render('glucose', {
+            user: req.user
+        });
+    });
 
 app.get('/logout', function(req, res){
   req.logout();
