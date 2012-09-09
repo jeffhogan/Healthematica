@@ -3,7 +3,17 @@ html
   head
     title= title
     link(rel='stylesheet', href='/css/bootstrap.min.css')
+    link(rel='stylesheet', href='/css/style.css')
     script(src='/js/jquery.js')
     script(src='/js/bootstrap.min.js')
   body
-    block content
+    header
+        div.span12
+            h1= title
+            h2 A Site for Real-time Data Visualization
+    container.span12
+        div.container-fluid
+            div.row-fluid
+                include sidebar
+                div.span9#main-content
+                    block content

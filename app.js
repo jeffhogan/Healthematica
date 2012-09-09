@@ -54,7 +54,7 @@ app.configure('development', function(){
 });
 
 // Globals
-app.locals.title = 'Express';
+app.locals.title = 'Healthematica';
 
 //TEST: create user
 //db.saveUser("peter", "freedom", "e@e.org", function(err, test){
@@ -101,10 +101,6 @@ passport.deserializeUser(function(username, done) {
 /* Routes *******************************/
     /* Base Routes ****/
 app.get('/', function(req, res){
-
-    db.readMultiple("glucose", "jeff", function(err, doc) {
-        console.log(doc);    
-    });
 
     res.render('index', { 
         user: req.user 
