@@ -30,26 +30,31 @@ nconf.argv()
 var app = express();
 
 app.configure(function(){
-  app.set('port', process.env.PORT || 3000);
-  app.set('view options', {layout: false});
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
-  app.use(express.favicon());
-  app.use(express.logger('dev'));
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(express.cookieParser(nconf.get('COOKIE_SECRET')));
-  app.use(express.session());
-  app.use(flash());
-  app.use(passport.initialize());
-  app.use(passport.session());
-  app.use(app.router);
-  app.use(express.static(path.join(__dirname, 'public')));
+    app.set('port', process.env.PORT || 3000);
+    app.set('view options', {
+        layout: false,
+    });
+    app.set('views', __dirname + '/views');
+    app.set('view engine', 'jade');
+    app.use(express.favicon());
+    app.use(express.logger('dev'));
+    app.use(express.bodyParser());
+    app.use(express.methodOverride());
+    app.use(express.cookieParser(nconf.get('COOKIE_SECRET')));
+    app.use(express.session());
+    app.use(flash());
+    app.use(passport.initialize());
+    app.use(passport.session());
+    app.use(app.router);
+    app.use(express.static(path.join(__dirname, 'public')));
 });
 
 app.configure('development', function(){
   app.use(express.errorHandler());
 });
+
+// Globals
+app.locals.title = 'Express';
 
 //TEST: create user
 //db.saveUser("peter", "freedom", "e@e.org", function(err, test){
@@ -93,80 +98,68 @@ passport.deserializeUser(function(username, done) {
 
 
 /* Routes *******************************/
+    /* Base Routes ****/
 app.get('/', function(req, res){
     res.render('index', { 
-        title: 'Express',
         user: req.user 
     });
 });
 
+    /* Authentication and Account related routes ****/
 app.get('/login', function(req, res) {
     res.render('login', { 
-        title: 'Express',
         user: req.user, 
         message: req.flash('error') 
     });
 });
 
-//app.get('/account', function(req, res) {
-//    res.render('account', { 
-//        title: 'Express',
-//        user: req.user,
-//        message: req.flash('error') 
-//    });
-//});
-
 app.post('/login',
   passport.authenticate('local', {failureRedirect: '/login', failureFlash: true}),
   function(req, res) {
-    res.redirect('/');
+    message: req.flash("test"), 
+    res.redirect('/')
   }
 );
 
 app.get('/account', auth.ensureAuthenticated, function(req, res){
     res.render('account', { 
         user: req.user,
-        title: 'Express',
         message: req.flash('error')
     });
 });
 
-// The `req.logout()` method is provided by Passport and provides an easy way to end
-// a user's authenticated session. Note that after a user is logged out, you still need to
-// redirect them to a new page.
 app.get('/logout', function(req, res){
   req.logout();
   res.redirect('/');
 });
 
-// Registration will be your job, but this route will at least show the user the
-// registration page.
+    /* Registration ****/
 app.get('/register', function(req, res) {
-  res.render('register', {message: req.flash('error')});
+    res.render('register', {
+        message: req.flash('error')
+    });
 });
 
-// Your job is to write the logic for registering a new user.
-// If the user doesn't provide all needed info (username, email, password),
-// make sure to send them back to the registration form and tell them they messed up.
-// If they provide the needed details, add the user then let them login.
 app.post('/register', function(req, res) {
 
     var data = req.body;
 
     // Check if username is in use
-    db.get(data.username, function(err, doc) {
-        if(doc) {
-          res.render('register', { message: req.flash('Username is in use')});
+    db.checkUserByName(data.username, function(err, doc) {
+    if(err) {
+          res.render('register', { message: req.flash(err)});
 
     // Check if confirm password does not match
-    } else if(data.password != data.confirm_password) {
-      res.render('register', { message: req.flash('Password does not match')});
+    //} else if(data.password != data.confirm_password) {
+     // res.render('register', { message: req.flash('Password does not match')});
+
+    } else if(data.username == "" || data.password == "" || data.email == "") {
+        res.render('register', { message: req.flash("Please fill out all fields")});
 
     // Create user in database
     } else {
-      delete data.confirm_password;
-      require('db').save();
-        db.save(data.username, data,
+      //delete data.confirm_password;
+        db.saveUser(data.username, data.password, data.email,
             function(db_err, db_res) {
               res.render('index', { message: req.flash('User created')});
             });
