@@ -6,6 +6,8 @@ html
     link(rel='stylesheet', href='/css/style.css')
     script(src='/js/jquery.js')
     script(src='/js/bootstrap.min.js')
+    script(src='/socket.io/socket.io.js')
+    script(src='/js/jquery.flot.js')
   body
     header
         div.span12
@@ -20,3 +22,9 @@ html
     footer
         div
             small &copy; 2012 Jeff Hogan
+    script
+        var socket = io.connect(location);
+        socket.on("connect", function(data) {
+           $("#connections").html(data.total);
+        });
+    script(src='/js/graph.js')

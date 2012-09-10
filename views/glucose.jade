@@ -4,6 +4,7 @@ block content
     h3 Glucose
     if message
         p.text-success= message
+    a(href="/account/glucose/new") Add New Glucose Entry
     table.table.table-hover 
       if glucoses.length 
         thead

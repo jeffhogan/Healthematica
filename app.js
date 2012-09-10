@@ -12,6 +12,7 @@ var express = require('express')
   , auth = require('./lib/hm_auth.js')
   , util = require('./lib/hm_util.js')
   , http = require('http')
+  , socketio = require('socket.io')
   , path = require('path')
   , fs = require('fs')
   , nconf = require('nconf')
@@ -68,6 +69,7 @@ app.locals.title = 'Healthematica';
 //        console.log("Found: " + results); 
 //    }
 //});
+
 
 
 /* Passport setup *******************************/
@@ -132,14 +134,31 @@ app.get('/account', auth.ensureAuthenticated, function(req, res){
     });
 });
 
-    app.get('/account/glucose', auth.ensureAuthenticated, function(req, res) {
-        db.readMultiple("glucose", req.user.name, function(err, doc) {
-            res.render('glucose', {
-                user: req.user,
-                glucoses: doc 
-            });
+/* Glucose CRUD ****/
+app.get('/account/glucose', auth.ensureAuthenticated, function(req, res) {
+    db.readMultiple("glucose", req.user.name, function(err, doc) {
+        res.render('glucose', {
+            user: req.user,
+            glucoses: doc,
+            message: req.flash('success')
         });
     });
+});
+
+app.get('/account/glucose/new', auth.ensureAuthenticated, function(req, res) {
+   res.render('glucose.new.jade', { 
+        user: req.user
+   });
+});
+
+app.post('/account/glucose/new', auth.ensureAuthenticated, function(req, res) {
+    req.flash("success", "Entry Added Successfully");
+    db.createEntry("glucose", req.user.name, req.body.value, function(err, success) {
+        if(success) { 
+            res.redirect('/account/glucose')
+        };
+    });
+});
 
 app.get('/logout', function(req, res){
   req.logout();
@@ -182,7 +201,36 @@ app.post('/register', function(req, res) {
 
 });
 
+/* Graphs ********************************/
+app.get('/glucose/ajax', function(req, res) {
+    db.getGlucoseData("glucose", function(err, data) {
+        res.contentType('json');
+        res.send({ 
+            "data": data 
+        });
+    });
+});
+
+
 /* Initialization *******************************/ 
-http.createServer(app).listen(app.get('port'), function(){
+var server = http.createServer(app);
+server.listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
 });
+
+/* Socket.io *******************************/ 
+var io = socketio.listen(server);
+var connections = 0;
+io.sockets.on('connection', function (socket) {
+    connections++;
+    io.sockets.emit('connect', { 
+        total: connections 
+    });
+    socket.on('disconnect', function (data) {
+        connections--;
+        io.sockets.emit('connect', {
+            total: connections
+        });
+    });
+});
+
