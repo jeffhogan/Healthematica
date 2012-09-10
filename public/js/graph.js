@@ -9,7 +9,7 @@ $.ajax({
 
     success: function(data) {
         console.log(data.data);
-        $.plot($("#graph"), [data.data] );
+        $.plot($("#graph"), data.data );
     }
 
 });
