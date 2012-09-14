@@ -22,9 +22,4 @@ html
     footer
         div
             small &copy; 2012 Jeff Hogan
-    script
-        var socket = io.connect(location);
-        socket.on("connect", function(data) {
-           $("#connections").html(data.total);
-        });
     script(src='/js/graph.js')

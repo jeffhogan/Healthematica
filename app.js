@@ -155,7 +155,8 @@ app.post('/account/glucose/new', auth.ensureAuthenticated, function(req, res) {
     req.flash("success", "Entry Added Successfully");
     db.createEntry("glucose", req.user.name, req.body.value, function(err, success) {
         if(success) { 
-            res.redirect('/account/glucose')
+            res.redirect('/account/glucose');
+            sendUpdate();
         };
     });
 });
@@ -233,4 +234,9 @@ io.sockets.on('connection', function (socket) {
         });
     });
 });
+
+// Send the emit when new data is added
+var sendUpdate = function() {
+    io.sockets.emit('newData', {});
+};
 

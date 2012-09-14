@@ -2,24 +2,41 @@
  * Javascript code for the home page data visualization
  */
 
+//setup Flot options
+var options = {
+    series: {
+        lines: { show: false },
+        points: { show: true }
+    },
+    xaxis: {
+       minTickSize: 1
+   },
+};
+
+
 // Grab the user data from the database
-$.ajax({
-    url: "/glucose/ajax",
-    dataType: "json",
+var loadGraph = function() {
+    $.ajax({
+        url: "/glucose/ajax",
+        dataType: "json",
 
-    success: function(data) {
-        console.log(data.data);
-        $.plot($("#graph"), data.data );
-    }
+        success: function(data) {
+            $.plot($("#graph"), data.data, options);
+        }
 
+    });
+};
+
+// Initial Load
+loadGraph();
+
+// Cheesy socket reload...
+var socket = io.connect(location);
+socket.on("newData", function() {
+    loadGraph(); 
 });
 
+socket.on("connect", function(data) {
+    $("#connections").html(data.total);
+});
 
-// create an array of points for each user
-
-
-// push each array into flot
-
-
-
-//$.plot($("#graph"), [ [[0, 0], [1, 1]] ], { yaxis: { max: 1 } });
